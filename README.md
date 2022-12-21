@@ -105,10 +105,10 @@ you want. Be sure you've added your Twitter Bearer Token.
 - [x] Add PostgreSQL database to Flask.
 - [x] Better organization and structure.
 - [x] Persist DB data locally.
-- [] Automate data scraping.
-- [] ML model training.
-- [] Automated evaluation and training.
-- [] Better UX.
+- [ ] Automate data scraping.
+- [ ] ML model training.
+- [ ] Automated evaluation and training.
+- [ ] Better UX.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

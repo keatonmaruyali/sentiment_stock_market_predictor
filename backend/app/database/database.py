@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 import sqlalchemy.orm as orm
 
-PSQL_DATABASE_URL = "postgresql://postgres:postgres@db:5432/postgres"
+from app.environment import DB_URL
 
-engine = create_engine(PSQL_DATABASE_URL)
+engine = create_engine(DB_URL)
 
 
 def get_db_conn():
