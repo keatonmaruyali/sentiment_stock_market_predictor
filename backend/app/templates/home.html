@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>{% block title %} Welcome to the Stock Market Predictor!! {% endblock %}</h1>
+
+    <h2>Instructions:</h2>
+    <div>
+        Currently, this is not much of a functioning application.
+        In this state, the application can scrape news headlines and tweets, and store them
+        in a PostgreSQL database for future use.
+    </div>
+    <div>
+        The end goal is to use this data to train a series of machine learning models, and
+        determine what kind of time-series model would be appropriate.
+        By storing all the data locally, we can group the data in the future, into whatever
+        time block we foresee as being useful.
+    </div>
+
+{% endblock %}

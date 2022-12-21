@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>{% block title %} Tweets {% endblock %}</h1>
+    <table style="width:100%">
+      <tr>
+        <th style="width:10%">Date Posted</th>
+        <th style="width:10%">Sentiment</th>
+        <th style="width:70%">Tweet</th>
+        <th style="width:10%">Date Created</th>
+      </tr>
+      {% for tweet in tweets %}
+      <tr style="height:50px">
+        <td style="text-align: center">{{tweet.date_posted}}</td>
+        <td style="text-align: center">{{tweet.sentiment}}</td>
+        <td style="text-align: center">{{tweet.text}}</td>
+        <td style="text-align: center">{{tweet.date_created}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+{% endblock %}
