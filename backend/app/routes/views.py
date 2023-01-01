@@ -1,8 +1,9 @@
-from flask import request, render_template
+from flask import request, render_template, redirect, url_for
 from flask import current_app as app
+import re
 
-from app.database import crud
-from app.database.database import get_db_conn
+from backend.app.database import crud
+from backend.app.database.database import get_db_conn
 
 
 @app.route("/")
@@ -15,6 +16,23 @@ def about():
     return render_template("about.html")
 
 
+@app.route("/tickers", methods=['GET', 'POST'])
+def tickers(db=get_db_conn()):
+    if request.method == 'GET':
+        tickers = crud.get_tickers(db)
+        return render_template("tickers.html", tickers=tickers)
+
+    if request.method == 'POST':
+        new_tickers = request.form['new-ticker'].upper()
+        new_tickers = re.split(r',|\s', new_tickers)
+
+        if not isinstance(new_tickers, list):
+            new_tickers = [new_tickers]
+
+        crud.add_tickers(db, new_tickers)
+        return redirect(url_for('tickers'))
+
+
 @app.route("/finviz", methods=['GET', 'POST'])
 def finviz(db=get_db_conn()):
     if request.method == 'GET':
@@ -22,8 +40,8 @@ def finviz(db=get_db_conn()):
         return render_template("finviz.html", headlines=headlines)
 
     elif request.method == 'POST':
-        ticker = request.get_json().get('ticker')
-        headlines = crud.add_headlines(db, ticker)
+        tickers = request.get_json().get('tickers')
+        headlines = crud.add_headlines(db, tickers)
         return render_template("finviz.html", headlines=headlines)
 
 
@@ -34,6 +52,6 @@ def twitter(db=get_db_conn()):
         return render_template("tweet.html", tweets=tweets)
 
     elif request.method == 'POST':
-        ticker = request.get_json().get('ticker')
-        tweets = crud.add_twitter(db, ticker)
+        tickers = request.get_json().get('tickers')
+        tweets = crud.add_twitter(db, tickers)
         return render_template("tweet.html", tweets=tweets)

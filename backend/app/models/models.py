@@ -1,6 +1,14 @@
-from sqlalchemy import func
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    Text,
+    func,
+    Float,
+)
+from sqlalchemy.ext.declarative import declarative_base
 
-from app import db
+Base = declarative_base()
 
 
 class BaseModel:
@@ -11,21 +19,30 @@ class BaseModel:
         ]
 
 
-class FinViz(db.Model, BaseModel):
+class FinViz(Base, BaseModel):
     __tablename__ = "finviz"
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    date_posted = db.Column(db.Date, nullable=False)
-    news_headline = db.Column(db.String, nullable=False)
-    sentiment = db.Column(db.Float, nullable=False)
-    date_created = db.Column(db.Date, nullable=False, default=func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    news_headline = Column(Text, nullable=False)
+    sentiment = Column(Float, nullable=False)
+    ticker = Column(Text, nullable=False)
+    date_posted = Column(DateTime, nullable=False)
+    date_created = Column(DateTime, nullable=False, default=func.now())
 
 
-class Tweets(db.Model, BaseModel):
+class Tweets(Base, BaseModel):
     __tablename__ = 'tweets'
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    date_posted = db.Column(db.Date, nullable=False)
-    date_created = db.Column(db.Date, nullable=False, default=func.now())
-    text = db.Column(db.String, nullable=False)
-    sentiment = db.Column(db.Float, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(Text, nullable=False)
+    sentiment = Column(Float, nullable=False)
+    ticker = Column(Text, nullable=False)
+    date_posted = Column(DateTime, nullable=False)
+    date_created = Column(DateTime, nullable=False, default=func.now())
+
+
+class TrackedTickers(Base, BaseModel):
+    __tablename__ = 'tracked_tickers'
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticker = Column(Text, nullable=False)
