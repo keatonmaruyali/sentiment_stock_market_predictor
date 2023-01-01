@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>{% block title %} Tickers {% endblock %}</h1>
+    <div class='parent'>
+      <div class="child inline-block-child">
+        <form method="post">
+          <label for="new-ticker">Add Ticker:</label>
+          <br>
+          <input 
+            type="text" 
+            id="new-ticker"
+            name="new-ticker"
+            placeholder="Enter new ticker"
+            value="{{ request.form['new-ticker'] }}"
+          >
+          <br>
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+      <div class="child inline-block-child">
+        <table style="width:25%">
+          <tr>
+            <th style="width:100%">Tickers</th>
+          </tr>
+          {% for ticker in tickers %}
+          <tr style="height:50px">
+            <td style="text-align: center">{{ticker.ticker}}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+{% endblock %}
