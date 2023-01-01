@@ -1,6 +1,7 @@
 FROM python:3.7-slim
-ENV APP_HOME /app
+ENV APP_HOME /backend
 WORKDIR $APP_HOME
+
 COPY . ./
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc \

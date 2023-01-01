@@ -3,8 +3,8 @@ from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
 import pandas as pd
 
-from app.services.sentimentService import VaderSentimentService
-from app.environment import FINVIZ_URL
+from backend.app.services.sentimentService import VaderSentimentService
+from backend.app.environment import FINVIZ_URL
 
 
 class NewsHeadlineScraper:

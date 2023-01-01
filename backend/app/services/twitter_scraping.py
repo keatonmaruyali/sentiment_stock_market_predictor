@@ -2,8 +2,8 @@ import tweepy
 import re
 from datetime import timedelta, datetime
 
-from app.services.sentimentService import VaderSentimentService
-from app.environment import TWITTER_BEARER_TOKEN
+from backend.app.services.sentimentService import VaderSentimentService
+from backend.app.environment import TWITTER_BEARER_TOKEN
 
 
 class TwitterScraper:
