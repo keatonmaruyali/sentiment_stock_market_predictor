@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>{% block title %} About {% endblock %}</h1>
+
+    <div>
+        This is my Capstone Project that I created in 2020, after completing my 3-month Data
+        Science Bootcamp.
+        This is Version 2, which has some improvements over the last version, using some of
+        the things I learnt these past couple of years.
+    </div>
+
+    <h2> Version 1: </h2>
+    <ul>
+        <li> Run scraping manually everyday. </li>
+        <li> No OOP. </li>
+        <li> Clean and divide data by day. </li>
+        <li> No database, everything was saved in an Excel spreadsheet, then manually merged. </li>
+        <li> Separate operation to train ML models. </li>
+        <li> Basic Flask app. </li>
+    </ul>
+
+    <h2> Version 2: </h2>
+    <ul>
+        <li> Dockerized application. </li>
+        <li> OOP. </li>
+        <li> Somewhat better Flask app. </li>
+        <li> Better organization and structure. </li>
+        <li> Existing database that will keep a version locally for persistence. </li>
+    </ul>
+
+    <h2> Version 3: (to come) </h2>
+    <ul>
+        <li> Offload scraping to Airflow for automation. </li>
+        <li> Create workflow to group data by time blocks. </li>
+        <li> Data augmentation and ML model training. </li>
+        <li> Deploy model. </li>
+        <li> Automate ML model re-testing, re-training, and re-deployment in Airflow. </li>
+    </ul>
+
+{% endblock %}
