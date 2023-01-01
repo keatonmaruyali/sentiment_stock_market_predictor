@@ -101,11 +101,28 @@ you want. Be sure you've added your Twitter Bearer Token.
 <!-- ROADMAP -->
 ## Roadmap
 
+Cleanup
 - [x] Convert to OOP.
 - [x] Add PostgreSQL database to Flask.
 - [x] Better organization and structure.
 - [x] Persist DB data locally.
-- [ ] Automate data scraping.
+- [x] Dockerize everything.
+
+Data Scraping
+- [x] Automate data scraping.
+  - [x] Add Airflow.
+  - [x] Before running scheduled scraping job, sync list of ticker symbols.
+- [ ] Allow for users to view and edit list of ticker symbols.
+  - [x] Create HTML page and input box.
+  - [x] When editing, push to PG table and updage Airflow variables.
+  - [x] Viewing will pull from PG table.
+  - [x] Running job will pull from Airflow variables.
+- [ ] Allow users to manually trigger the scraping.
+- [ ] Prevent duplicate data.
+  - [ ] Should it be upon adding to the DB that we check or also a scheduled job?
+- [x] Allow for bulk operations.
+
+Machine Learning
 - [ ] ML model training.
 - [ ] Automated evaluation and training.
 - [ ] Better UX.

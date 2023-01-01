@@ -142,3 +142,6 @@ cython_debug/
 media
 static
 .vscode/
+
+# Project data
+/data
