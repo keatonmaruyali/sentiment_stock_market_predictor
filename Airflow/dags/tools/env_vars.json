@@ -1,0 +1,8 @@
+{
+    "TWITTER_BEARER_TOKEN": "AAAAAAAAAAAAAAAAAAAAAHjLGAEAAAAAAqhN%2Bz0VZ1DDDuiPGL5dNidSX7U%3DFcr9bkGHz4Zh6oEXMaQ8fu12xyrVAVh3lV1ae3cwFOXOC7smSs",
+    "POSTGRES_USERNAME": "airflow",
+    "POSTGRES_PASSWORD": "airflow",
+    "PG_HOST": "postgres",
+    "PG_DB_NAME": "stock_market",
+    "FINVIZ_URL": "https://finviz.com/quote.ashx"
+}

@@ -1,0 +1,5 @@
+Flask-SQLAlchemy
+Tweepy
+vaderSentiment
+beautifulsoup4
+nltk
