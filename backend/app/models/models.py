@@ -46,3 +46,18 @@ class TrackedTickers(Base, BaseModel):
 
     id = Column(Integer, primary_key=True, index=True)
     ticker = Column(Text, nullable=False)
+
+
+class ModelTrainingData(Base, BaseModel):
+    __tablename__ = 'model_training_data'
+
+    id = Column(Integer, primary_key=True, index=True)
+    date_posted = Column(DateTime, index=True, nullable=False)
+    headline_sentiment = Column(Float, nullable=False)
+    headline_sentiment_change = Column(Float, nullable=False)
+    sma3_sentiment_headlines = Column(Float, nullable=False)
+    headline_sentiment_change_t1 = Column(Float, nullable=False)
+    tweet_sentiment = Column(Float, nullable=False)
+    tweet_sentiment_change = Column(Float, nullable=False)
+    sma3_sentiment_tweets = Column(Float, nullable=False)
+    tweet_sentiment_change_t1 = Column(Float, nullable=False)

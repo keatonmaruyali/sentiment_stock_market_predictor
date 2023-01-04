@@ -55,3 +55,14 @@ def twitter(db=get_db_conn()):
         tickers = request.get_json().get('tickers')
         tweets = crud.add_twitter(db, tickers)
         return render_template("tweet.html", tweets=tweets)
+
+
+@app.route("/analysis", methods=['GET', 'POST'])
+def analysis(db=get_db_conn()):
+    if request.method == 'GET':
+        analysis_data = crud.get_analysis(db)
+        return render_template("analysis.html", data=analysis_data)
+
+    elif request.method == 'POST':
+        analysis_data = crud.process_headlines_and_tweets(db)
+        return render_template("analysis.html", data=analysis_data)

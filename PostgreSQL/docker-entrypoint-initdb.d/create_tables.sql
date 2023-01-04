@@ -24,7 +24,22 @@ CREATE TABLE tweets (
   date_created timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Creation of tracked_tickers table
 CREATE TABLE tracked_tickers (
   id serial PRIMARY KEY,
   ticker varchar(8) NOT NULL UNIQUE
 );
+
+-- Creation of model_training_data table
+CREATE TABLE model_training_data (
+  id serial PRIMARY KEY,
+  date_posted timestamp NOT NULL,
+  headline_sentiment float NOT NULL,
+  headline_sentiment_change float NOT NULL,
+  sma3_sentiment_headlines float NOT NULL,
+  headline_sentiment_change_t1 float NOT NULL,
+  tweet_sentiment float NOT NULL,
+  tweet_sentiment_change float NOT NULL,
+  sma3_sentiment_tweets float NOT NULL,
+  tweet_sentiment_change_t1 float NOT NULL
+)

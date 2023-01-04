@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import List
 from sqlalchemy.exc import IntegrityError
+import pandas as pd
 
 from backend.app.models import models
 from backend.app.services import finviz_scraper, twitter_scraper
+from backend.app.routes.utils import merge_headlines_and_tweets
 
 
 # Ticker Operations:
@@ -117,3 +119,49 @@ def add_twitter(db, tickers: List[str]):
     db.add_all(formatted_tweets)
     db.commit()
     return added_tweets
+
+
+# Headline and Tweepy Operations:
+def get_analysis(db):
+    analysis_data = db.query(models.ModelTrainingData).order_by(
+        models.ModelTrainingData.date_posted.desc()
+    ).all()
+    return models.ModelTrainingData.from_orm(analysis_data)
+
+
+def process_headlines_and_tweets(db):
+    all_tweets = get_tweets(db)
+    all_tweets_df = pd.DataFrame(
+        all_tweets,
+        columns=[
+            'text',
+            'sentiment',
+            'ticker',
+            'date_posted',
+            'date_created',
+        ],
+    )
+    all_headlines = get_headlines(db)
+    all_headlines_df = pd.DataFrame(
+        all_headlines,
+        columns=[
+            'news_headline',
+            'sentiment',
+            'ticker',
+            'date_posted',
+            'date_created',
+        ],
+    )
+
+    merged_data = merge_headlines_and_tweets(
+        headlines=all_headlines_df,
+        tweets=all_tweets_df,
+    )
+
+    formatted_merged_data = [
+        models.ModelTrainingData(**row)
+        for row in merged_data.to_dict('records')
+    ]
+    db.add_all(formatted_merged_data)
+    db.commit()
+    return merged_data.to_dict('records')

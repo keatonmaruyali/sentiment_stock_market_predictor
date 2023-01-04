@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>{% block title %} Analysis {% endblock %}</h1>
+    <table style="width:100%">
+      <tr>
+        <th style="width:10%">Date Posted</th>
+        <th style="width:10%">Headline Sentiment</th>
+        <th style="width:10%">Change in Headline Sentiment</th>
+        <th style="width:10%">SMA(3) of Headline Sentiment</th>
+        <th style="width:10%">Tweet Sentiment</th>
+        <th style="width:10%">Change in Tweet Sentiment</th>
+        <th style="width:10%">SMA(3) of Tweet Sentiment</th>
+    </tr>
+      {% for row in data %}
+      <tr style="height:50px">
+        <td style="text-align: center">{{row.date_posted}}</td>
+        <td style="text-align: center">{{row.headline_sentiment}}</td>
+        <td style="text-align: center">{{row.headline_sentiment_change}}</td>
+        <td style="text-align: center">{{row.sma3_sentiment_headlines}}</td>
+        <td style="text-align: center">{{row.tweet_sentiment}}</td>
+        <td style="text-align: center">{{row.tweet_sentiment_change}}</td>
+        <td style="text-align: center">{{row.sma3_sentiment_tweets}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+
+{% endblock %}
