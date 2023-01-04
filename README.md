@@ -25,6 +25,7 @@
         <li><a href="#installation">Setup</a></li>
       </ul>
     </li>
+    <li><a href="#notes">Notes</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
@@ -98,10 +99,40 @@ you want. Be sure you've added your Twitter Bearer Token.
 
 
 
+## Notes
+
+### Data Scraping
+
+To run Airflow, the `setup` DAG needs to first be toggled as `active`, then run, to create
+the Airflow variables and connections. There will be an error displayed in red at the top
+of the Airflow dashboard until this step is completed. Once run, refresh the page and the
+`data_scraping` DAG should appear. Now, you can toggle it, and run it.
+
+The Twitter developer API has rate limits, meaning there is a limit to the number of tweets
+a single bearer token can fetch. It is set at 2 million tweets per month, which depending on
+what ticker symbols you use, may not be much. By default, I have set the `start_time` for
+the query, to be one day back. If no value is provided to the endpoint, it will default to
+7 days back.
+
+
+### Analysis
+
+Due to the little data I have tested with, I have manually set the interval window for data
+to 30-minute intervals. This can certainly change with increasing data volume.
+
+Since there are much more tweets, compared to news headlines, there are large portions of
+data intervals where news headlines have a `sentiment = 0`. When merging the headline and 
+tweet data, I perform an outer join on the tweet data, then fill in the missing data with
+a value of 0 for the sentiment. This is a product of the incredibly short timeframe.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
 <!-- ROADMAP -->
 ## Roadmap
 
-Cleanup
+Code Cleanup
 - [x] Convert to OOP.
 - [x] Add PostgreSQL database to Flask.
 - [x] Better organization and structure.
@@ -117,15 +148,32 @@ Data Scraping
   - [x] When editing, push to PG table and updage Airflow variables.
   - [x] Viewing will pull from PG table.
   - [x] Running job will pull from Airflow variables.
+  - [ ] Allow user to delete/deactivate ticker.
 - [ ] Allow users to manually trigger the scraping.
+  - [ ] Keep track of time of last scraping job. Manually triggering should use
+  this value as `start_time`.
 - [ ] Prevent duplicate data.
   - [ ] Should it be upon adding to the DB that we check or also a scheduled job?
 - [x] Allow for bulk operations.
+
+Data Processing
+- [x] Process data to be used for ML model training.
+  - [x] Create new endpoints and supporting functions.
+  - [x] Create new table.
+- [ ] Allow user to input time-interval.
+- [ ] What happens to old data when new time-interval is required?
+  - [ ] One table per interval?
+  - [ ] One master table, but interval window as a feature?
 
 Machine Learning
 - [ ] ML model training.
 - [ ] Automated evaluation and training.
 - [ ] Better UX.
+
+Improvements
+- [ ] Migrations.
+- [ ] Input validation.
+- [ ] Login.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
