@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <h1>{% block title %} SEC Statements {% endblock %}</h1>
+    <div class='parent'>
+      <div class="child inline-block-child">
+        <form method="post">
+          <label for="search-company">Search Company Statements:</label>
+          <br>
+          <input 
+            type="text" 
+            id="search-company"
+            name="search-company"
+            placeholder="Enter new ticker"
+            value="{{ request.form['search-company'] }}"
+          >
+          <br>
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+
+{% endblock %}
