@@ -219,6 +219,7 @@ services:
       - '5000:5000'
     volumes:
       - ./backend/app:/backend/app
+      - ./backend/sec-edgar-filings:/backend/sec-edgar-filings
     depends_on:
       postgres:
         condition: service_healthy
