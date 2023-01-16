@@ -1,16 +1,22 @@
-import pandas as pd
+from backend.app.services import (
+    sec_stat_downloader,
+    fund_analysis,
+)
 
-from backend.app.services import finviz_scraper, twitter_scraper
+
+def _download_statements(ticker):
+    sec_stat_downloader(
+        ticker=ticker,
+        start_date='2020-01-01',
+    )
 
 
-def merge_headlines_and_tweets(headlines, tweets):
-    intervaled_tweets = twitter_scraper.generate_interval_timeseries(tweets)
-    intervaled_headlines = finviz_scraper.generate_interval_timeseries(headlines)
-    return (
-        pd.merge(
-            intervaled_tweets,
-            intervaled_headlines,
-            on='date_posted',
-            how='outer'
-        ).fillna(0)
+def get_sec_statements(ticker):
+    filepaths = sec_stat_downloader.get_file_paths(ticker=ticker)
+    return fund_analysis.scrape(urls=filepaths)
+
+
+def get_all_state_figures(sec_statements):
+    return fund_analysis.generate_all_state_figs(
+        all_statements=sec_statements
     )

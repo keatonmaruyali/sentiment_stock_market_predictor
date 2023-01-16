@@ -4,6 +4,11 @@ import re
 
 from backend.app.database import crud
 from backend.app.database.database import get_db_conn
+from backend.app.routes.utils import (
+    _download_statements,
+    get_sec_statements,
+    get_all_state_figures,
+)
 
 
 @app.route("/")
@@ -66,3 +71,45 @@ def analysis(db=get_db_conn()):
     elif request.method == 'POST':
         analysis_data = crud.process_headlines_and_tweets(db)
         return render_template("analysis.html", data=analysis_data)
+
+
+@app.route("/sec_statements", methods=['GET', 'POST'])
+def sec_statements():
+    if request.method == 'GET':
+        return render_template("sec_statements.html")
+
+    if request.method == 'POST':
+        search_ticker = request.form['search-company'].upper()
+        search_ticker = re.split(r',|\s', search_ticker)
+        return redirect(url_for('sec_results', ticker=search_ticker))
+
+
+@app.route("/sec_results/<ticker>", methods=['GET'])
+def sec_results(ticker):
+    if request.method == 'GET':
+        # print(f'Ticker: {ticker}')
+        sec_statements = get_sec_statements(ticker=ticker)
+        balance_sheet_fig = get_all_state_figures(
+            sec_statements=sec_statements
+        )
+        # print(f'Fig res: {len(balance_sheet_fig["balance"])}')
+        all_figs = []
+        for key, value in balance_sheet_fig.items():
+            stmt_figs = [f'<h1> {key.capitalize()} </h1>']
+            stmt_figs.append(
+                '<div> <img src="data:image/png;base64,'
+                f'{str(value[key])}"/> <div/>'
+            )
+            all_figs.append(' '.join(stmt_figs))
+
+        # print(f'All Figs: {list(balance_sheet_fig.keys())}')
+        with open("/backend/app/templates/sec_results.html", "w") as file:
+            file.write('''{% extends 'base.html' %}
+            {% block content %}
+                ''' + ' '.join(all_figs) + '''
+            {% endblock %}''')
+        return render_template("sec_results.html")
+    elif request.method == 'POST':
+        _download_statements(ticker)
+        return render_template("sec_results.html")
+

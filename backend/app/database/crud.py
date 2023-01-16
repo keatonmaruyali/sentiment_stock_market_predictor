@@ -5,7 +5,7 @@ import pandas as pd
 
 from backend.app.models import models
 from backend.app.services import finviz_scraper, twitter_scraper
-from backend.app.routes.utils import merge_headlines_and_tweets
+from backend.app.database.utils import merge_headlines_and_tweets
 
 
 # Ticker Operations:
