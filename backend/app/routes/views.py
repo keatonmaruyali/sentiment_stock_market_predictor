@@ -5,7 +5,9 @@ import re
 from backend.app.database import crud
 from backend.app.database.database import get_db_conn
 from backend.app.routes.utils import (
-    _download_statements,
+    check_sec_stmts,
+    download_statements,
+    format_html_figures,
     get_sec_statements,
     get_all_state_figures,
 )
@@ -74,42 +76,31 @@ def analysis(db=get_db_conn()):
 
 
 @app.route("/sec_statements", methods=['GET', 'POST'])
-def sec_statements():
+def sec_statements(db=get_db_conn()):
     if request.method == 'GET':
         return render_template("sec_statements.html")
 
-    if request.method == 'POST':
-        search_ticker = request.form['search-company'].upper()
-        search_ticker = re.split(r',|\s', search_ticker)
+    elif request.method == 'POST':
+        search_ticker = request.form['search-company'].lower()
+        input_start_date = request.form['start-date']
+        sec_stmt = check_sec_stmts(
+            db=db,
+            search_ticker=search_ticker,
+            input_start_date=input_start_date,
+        )
         return redirect(url_for('sec_results', ticker=search_ticker))
 
 
 @app.route("/sec_results/<ticker>", methods=['GET'])
 def sec_results(ticker):
     if request.method == 'GET':
-        # print(f'Ticker: {ticker}')
         sec_statements = get_sec_statements(ticker=ticker)
-        balance_sheet_fig = get_all_state_figures(
+        all_stmt_figs = get_all_state_figures(
             sec_statements=sec_statements
         )
-        # print(f'Fig res: {len(balance_sheet_fig["balance"])}')
-        all_figs = []
-        for key, value in balance_sheet_fig.items():
-            stmt_figs = [f'<h1> {key.capitalize()} </h1>']
-            stmt_figs.append(
-                '<div> <img src="data:image/png;base64,'
-                f'{str(value[key])}"/> <div/>'
-            )
-            all_figs.append(' '.join(stmt_figs))
-
-        # print(f'All Figs: {list(balance_sheet_fig.keys())}')
-        with open("/backend/app/templates/sec_results.html", "w") as file:
-            file.write('''{% extends 'base.html' %}
-            {% block content %}
-                ''' + ' '.join(all_figs) + '''
-            {% endblock %}''')
+        format_html_figures(all_stmt_figs)
         return render_template("sec_results.html")
+
     elif request.method == 'POST':
-        _download_statements(ticker)
-        return render_template("sec_results.html")
-
+        download_statements(ticker)
+        return redirect(url_for('sec_results', ticker=ticker))

@@ -6,13 +6,20 @@ class SECDownloader:
     def __init__(self):
         self.download_path = "/backend"
 
-    def __call__(self, ticker, start_date):
+    def __call__(self, ticker, start_date, end_date):
         dl = Downloader()
         if self.download_path is not None:
             dl = Downloader(self.download_path)
-        dl.get("10-Q", ticker.upper(), after=start_date, download_details=True)
+        dl.get(
+            "10-Q",
+            ticker.upper(),
+            after=start_date,
+            before=end_date,
+            download_details=True,
+        )
 
     def get_file_paths(self, ticker):
+        # TODO: fix url
         rootdir = f'/backend/sec-edgar-filings/{ticker.upper()}/10-Q'
         return [
             os.path.join(subdir, file)

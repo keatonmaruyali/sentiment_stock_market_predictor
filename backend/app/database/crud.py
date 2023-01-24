@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
@@ -165,3 +165,28 @@ def process_headlines_and_tweets(db):
     db.add_all(formatted_merged_data)
     db.commit()
     return merged_data.to_dict('records')
+
+
+def search_sec_ticker(db, ticker: str):
+    return db.query(models.SECStatementTracker).filter(
+        models.SECStatementTracker.ticker == ticker
+    ).one_or_none()
+
+
+def add_sec_ticker(db, ticker, start_date):
+    new_sec_stmt = models.SECStatementTracker(
+        **{
+            'ticker': ticker,
+            'start_date': start_date,
+            'end_date': datetime.today(),
+        }
+    )
+    db.add(new_sec_stmt)
+    db.commit()
+
+
+def update_sec_ticker(db, ticker, update_values):
+    # TODO: add lock
+    db.query(models.SECStatementTracker).filter(
+        models.SECStatementTracker.ticker == ticker
+    ).update(update_values, synchronize_session=False)
