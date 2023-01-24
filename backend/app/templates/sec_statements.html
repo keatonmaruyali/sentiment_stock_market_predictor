@@ -15,6 +15,13 @@
             placeholder="Enter new ticker"
             value="{{ request.form['search-company'] }}"
           >
+          <input 
+            type="text" 
+            id="start-date"
+            name="start-date"
+            placeholder="YYYY-mm-dd"
+            value="{{ request.form['start-date'] }}"
+          >
           <br>
           <button type="submit">Submit</button>
         </form>
