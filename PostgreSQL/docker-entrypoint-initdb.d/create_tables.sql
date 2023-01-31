@@ -42,4 +42,11 @@ CREATE TABLE model_training_data (
   tweet_sentiment_change float NOT NULL,
   sma3_sentiment_tweets float NOT NULL,
   tweet_sentiment_change_t1 float NOT NULL
-)
+);
+
+CREATE TABLE sec_statement_tracker (
+  id serial PRIMARY KEY,
+  ticker varchar(8) NOT NULL UNIQUE
+  start_date timestamp NOT NULL,
+  end_date timestamp NOT NULL,
+);
