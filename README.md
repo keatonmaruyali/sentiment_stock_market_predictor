@@ -2,7 +2,7 @@
   <h3 align="center">Stock Market Predictor</h3>
 
   <p align="center">
-    My Capstone project from my Lighthouse Labs Data Science Bootcamp, completed in 2020.
+    Stock Market Insights Extraction Platform
   </p>
 </div>
 
@@ -38,7 +38,18 @@
 
 This is a project I completed after a 3-month data science bootcamp in 2020. This was the
 very first instance of seeing code. I had 2 weeks to come up with an idea, then execute it.
-This project attemps to use historical stock prices with sentiment analysis on news and tweets, to predict stock prices.
+This project attemps to use historical stock prices with sentiment analysis on news and tweets,
+to predict stock prices.
+
+#### Update: 2022
+
+Now, with over 2 years of industry experience, I want to revisit this project
+and apply everything I have learnt, while expanding the horizon of this
+project.
+
+Due to the limited performance of the sentiment predictor, I chose to pivot to focus on
+fundamental analysis. This will involve the download of quarterly company statements
+submitted to the SEC, scraping and cleaning the data, then extracting performance ratios.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -47,10 +58,14 @@ This project attemps to use historical stock prices with sentiment analysis on n
 
 ### Built With
 
+* Airflow
+* BeautifulSoup
 * Flask
 * VaderSentiment
 * Tweepy
 * yfinance
+* sec_edgar_downloader
+* PostgreSQL
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -115,6 +130,19 @@ the query, to be one day back. If no value is provided to the endpoint, it will 
 7 days back.
 
 
+### SEC Statement Download
+
+I wanted this project to expand. The ML model training is limited by the lack of historical
+news headlines and tweets, so model performance will never be great, unless we somehow get
+all that data.
+
+Instead, this can be used in conjunction with fundamental analysis. For fundamental
+analysis, we require the quarterly statements from the companies of interest. Luckily,
+publicly traded companies submit their unaudited, quarterly statements to the SEC and
+all these records are publicly accessible. Using a Python library (sec_edgar_downloader),
+we can download these documents and scrape them.
+
+
 ### Analysis
 
 Due to the little data I have tested with, I have manually set the interval window for data
@@ -169,6 +197,17 @@ Machine Learning
 - [ ] ML model training.
 - [ ] Automated evaluation and training.
 - [ ] Better UX.
+
+SEC Statements
+- [x] Download statements.
+  - [x] Keep track of what statements we've already downloaded
+  - [ ] Download new quarterly statements too
+- [x] Scrape data from tables.
+  - [x] Quarterly statements are split into 5 sections
+  - [x] Merge all similar tables from each year together
+  - [x] Plot merged data
+- [ ] Derive insights from data
+  - [ ] Get a list of important ratios
 
 Improvements
 - [ ] Migrations.
