@@ -15,10 +15,10 @@ class FundamentalAnalysis:
     def __init__(self):
         self.stat_types = [
             'balance',
-            # 'operation',
+            'operation',
             'income/loss/comprehensive_lo',
             # 'stockholder/redeemable/interests/equity',
-            # 'flow'
+            'flow'
         ]
 
     def scrape(self, urls: list):
@@ -37,26 +37,28 @@ class FundamentalAnalysis:
             columns={stmt_df_by_stmt_type.columns[0]: 'index'},
             inplace=True,
         )
-        basic_index = [
-            i
-            for i, index in enumerate(list(stmt_df_by_stmt_type['index']))
-            if index == 'Basic'
-        ]
-        for i in basic_index:
-            stmt_df_by_stmt_type["index"][i] = f'{stmt_df_by_stmt_type["index"][i-1]} Basic'
-            stmt_df_by_stmt_type["index"][i+1] = f'{stmt_df_by_stmt_type["index"][i-1]} Diluted'
 
         for i, ind in enumerate(stmt_df_by_stmt_type['index']):
             stmt_df_by_stmt_type['index'][i] = ' '.join(
-                re.sub("[\(\[].*?[\)\]]", "", ind).replace(':', '').replace('/', '').replace('loss', 'income').split()
+                re.sub("[\(\[].*?[\)\]]", "", ind)
+                .replace(':', '')
+                .replace('/', '')
+                .replace('loss', 'income')
+                .split()
             )
-        dup_index_col = [   
+        dup_index_col = [
             i
             for i, v
-            in enumerate(stmt_df_by_stmt_type.iloc[:, 0].duplicated().to_list()[:4])
+            in enumerate(
+                stmt_df_by_stmt_type.iloc[:, 0].duplicated().to_list()[:4]
+            )
             if v
         ]
-        stmt_df_by_stmt_type.drop(stmt_df_by_stmt_type.columns[dup_index_col], axis=1, inplace=True)
+        stmt_df_by_stmt_type.drop(
+            stmt_df_by_stmt_type.columns[dup_index_col],
+            axis=1,
+            inplace=True,
+        )
 
         if stmt_type == 'balance':
             prefix = ''
@@ -70,6 +72,17 @@ class FundamentalAnalysis:
                     ind = ' '.join(ind.split(',')[:-1])
                     stmt_df_by_stmt_type['index'][i] = f'{prefix}{ind}'
                 else:
+                    stmt_df_by_stmt_type['index'][i] = f'{prefix}{ind}'
+
+        if stmt_type == 'operation':
+            prefix = ''
+            for i, ind in enumerate(stmt_df_by_stmt_type['index']):
+                if all(list(stmt_df_by_stmt_type.iloc[i, 1:].values == '')) and ind != '':
+                    prefix = f'{" ".join([index.lower().capitalize() for index in ind.split(" ")])}: '
+                elif any(x in ind for x in ['Total', 'Gross']):
+                    prefix = ''
+
+                if ind != '':
                     stmt_df_by_stmt_type['index'][i] = f'{prefix}{ind}'
 
         if stmt_type == 'income/loss/comprehensive_lo':
