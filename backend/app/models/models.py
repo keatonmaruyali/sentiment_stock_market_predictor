@@ -48,6 +48,15 @@ class TrackedTickers(Base, BaseModel):
     ticker = Column(Text, nullable=False)
 
 
+class SECStatementTracker(Base, BaseModel):
+    __tablename__ = 'sec_statement_tracker'
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticker = Column(Text, nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+
+
 class ModelTrainingData(Base, BaseModel):
     __tablename__ = 'model_training_data'
 

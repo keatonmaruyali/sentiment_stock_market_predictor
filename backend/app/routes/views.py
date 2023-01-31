@@ -83,7 +83,7 @@ def sec_statements(db=get_db_conn()):
     elif request.method == 'POST':
         search_ticker = request.form['search-company'].lower()
         input_start_date = request.form['start-date']
-        sec_stmt = check_sec_stmts(
+        check_sec_stmts(
             db=db,
             search_ticker=search_ticker,
             input_start_date=input_start_date,

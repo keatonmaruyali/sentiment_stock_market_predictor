@@ -190,3 +190,4 @@ def update_sec_ticker(db, ticker, update_values):
     db.query(models.SECStatementTracker).filter(
         models.SECStatementTracker.ticker == ticker
     ).update(update_values, synchronize_session=False)
+    db.commit()

@@ -67,12 +67,14 @@ def check_sec_stmts(db, search_ticker, input_start_date):
             input_start_date=input_start_date,
             query_results=query_results,
         )
+        print(f'{search_ticker} was found in db!')
     else:
-        # new_sec_ticker = crud.add_sec_ticker(
-        #     db=db,
-        #     ticker=search_ticker,
-        #     start_date=input_start_date,
-        # )
+        print(f'{search_ticker} was not found in db. Adding new ticker.')
+        crud.add_sec_ticker(
+            db=db,
+            ticker=search_ticker,
+            start_date=input_start_date,
+        )
         download_statements(
             ticker=search_ticker,
             start_date=datetime.strftime(
@@ -80,7 +82,6 @@ def check_sec_stmts(db, search_ticker, input_start_date):
                 "%Y-%m-%d",
             ),
         )
-        # return new_sec_ticker
 
 
 def _check_sec_download_date(
@@ -89,16 +90,13 @@ def _check_sec_download_date(
     input_start_date,
     query_results,
 ):
-    # input_start_date = datetime.strptime(
-    #     input_start_date,
-    #     "%Y-%m-%d",
-    # )
     next_quarter = query_results.end_date + relativedelta(
         years=2,
         months=6,
     )
 
     if query_results.start_date > input_start_date:
+        print('Downloading older statements!')
         download_statements(
             ticker=ticker,
             start_date=datetime.strftime(
@@ -117,6 +115,7 @@ def _check_sec_download_date(
         )
 
     if next_quarter < datetime.today():
+        print('Downloading new quarterly statement!')
         download_statements(
             ticker=ticker,
             start_date=datetime.strftime(
