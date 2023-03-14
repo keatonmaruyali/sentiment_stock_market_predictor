@@ -8,6 +8,7 @@ from fuzzywuzzy import fuzz, process
 from io import BytesIO
 from matplotlib.figure import Figure
 import pandas as pd
+import numpy as np
 import re
 
 
@@ -53,231 +54,193 @@ class FundamentalAnalysis:
             for i, n in enumerate(urls)
         }
 
-    def _clean_table(self, table, scale, stmt_type=None):
-        stmt_df_by_stmt_type = deepcopy(table)
-        stmt_df_by_stmt_type.rename(
-            columns={stmt_df_by_stmt_type.columns[0]: 'index'},
-            inplace=True,
-        )
-
-        if scale is None:
-            scale = stmt_df_by_stmt_type.iloc[0, 0].split(' ')[-1]
-        else:
-            scale = scale.split(' ')[-1]
-
-        dup_index_col = [
-            i
-            for i in range(1, 4)
-            if all(
-                stmt_df_by_stmt_type.iloc[:, 0].values == stmt_df_by_stmt_type.iloc[:, i].values
-            )
-        ]
-        stmt_df_by_stmt_type.drop(
-            stmt_df_by_stmt_type.columns[dup_index_col],
-            axis=1,
-            inplace=True,
-        )
-
-        for i, ind in enumerate(stmt_df_by_stmt_type['index']):
-            stmt_df_by_stmt_type['index'][i] = ' '.join(
-                re.sub("[\(\[].*?[\)\]]", "", ind)
-                .replace(':', '')
-                .replace('/', '')
-                .replace('loss', 'income')
-                .split()
-            )
-
-        blank_rows = [
-            row
-            for row in stmt_df_by_stmt_type.index
-            if all(stmt_df_by_stmt_type.loc[row] == '')
-        ]
-        stmt_df_by_stmt_type.drop(blank_rows, inplace=True)
-        stmt_df_by_stmt_type.reset_index(drop=True, inplace=True)
-
-        months_ended = {
-            i: index_value.replace(' -unaudited', '')
-            for i, index_value in enumerate(stmt_df_by_stmt_type['index'])
-            if 'months ended' in index_value.lower()
+    def _get_scale(self, df, stmt_type, scale):
+        ref_scale = {
+            'thousand': 1000,
         }
-        months_ended
-        for k, v in months_ended.items():
-            for col_pos in range(1, len(stmt_df_by_stmt_type.columns)-1):
-                stmt_df_by_stmt_type.iloc[k, col_pos] = f"{v} {stmt_df_by_stmt_type.iloc[k, col_pos]}"
 
+        if scale in ref_scale:
+            if stmt_type == 'operation/income_statements':
+                for row_name in df.index:
+                    if not any(x in row_name.lower() for x in ['basic', 'diluted']):
+                        df.loc[row_name] = round(df.loc[row_name]/ref_scale[scale], 2)
+            else:
+                df = round(df/ref_scale[scale], 2)
+        return df
+
+    def _stmt_cleaning(self, df, stmt_type):
+        index_list = df.index.to_list()
+
+        intermediate_index = []
         if stmt_type == 'balance':
             prefix = ''
-            for i, ind in enumerate(stmt_df_by_stmt_type['index']):
-                if ind.split(' ')[0].lower() in ['assets', 'liabilities']:
-                    prefix = f'{ind.split(" ")[0].lower().capitalize()}: '
-                elif ind.split(' ')[0] == 'Total':
+            for index in index_list:
+                if index.split(' ')[0].lower() in ['assets', 'liabilities']:
+                    prefix = f'{index.split(" ")[0].lower().capitalize()}: '
+                elif index.split(' ')[0] == 'Total':
                     prefix = ''
 
-                if ', net' in ind:
-                    ind = ' '.join(ind.split(',')[:-1])
-                    stmt_df_by_stmt_type['index'][i] = f'{prefix}{ind}'
+                if ', net' in index:
+                    index_clean = ' '.join(index.split(',')[:-1])
+                    intermediate_index.append(
+                        f'''
+                        {prefix}
+                        {index_clean.replace("stockholders equity", "equity")}
+                        '''
+                    )
                 else:
-                    ind = ind.replace(
-                        "stockholders\'", "stockholders"
-                    ).replace("stockholders’", "stockholders")
-                    stmt_df_by_stmt_type['index'][i] = f'{prefix}{ind}'
+                    intermediate_index.append(
+                        f'''
+                        {prefix}
+                        {index.replace("stockholders equity", "equity")}
+                        '''
+                    )
 
-                if all(
-                    kw in ind.lower()
-                    for kw in ['total', 'liabilities', 'equity']
+        elif stmt_type == 'operation/income_statements':
+            prefix = ''
+            for index in index_list:
+                total_prefix = (
+                    "total "
+                    f"{prefix.lower().replace(':', '').strip()}"
+                )
+                if df.loc[index].isna().values.all():
+                    prefix = f'''{" ".join(
+                        [
+                            index.lower().capitalize()
+                            for index
+                            in index.split(" ")
+                        ]
+                    )}'''
+                elif total_prefix == index.lower():
+                    prefix = ''
+                elif ', basic and diluted' in index.lower():
+                    prefix = (
+                        ' '.join(index.split(',')[:-1])
+                        .lower()
+                        .capitalize()
+                    )
+
+                if prefix.lower() not in index.lower():
+                    intermediate_index.append(f'{prefix}: {index}')
+                else:
+                    intermediate_index.append(index)
+
+        elif stmt_type == 'comprehensive/loss/comprehensive_lo':
+            prefix = ''
+            for i, index in enumerate(index_list):
+                cleaned_index = re.sub(r"[\(\[].*?[\)\]]", "", index)
+                if (
+                    df.iloc[i].isna().values.all()
+                    and index.split(' ')[0] == 'Other'
                 ):
-                    stmt_df_by_stmt_type['index'][i] = 'Total liabilities and equity'
-
-        if stmt_type == 'operation/income_statements':
-            for i, ind in enumerate(stmt_df_by_stmt_type.iloc[:, 0]):
-                if ind != '':
-                    cleaned_ind = ' '.join([
-                        i.strip().capitalize()
-                        for i in ind.split(' ')
-                    ]).replace('Gain', 'Income').replace('Loss', 'Income')
-                    if any(
-                        x in ind.lower()
-                        for x in [', net', ', basic and diluted']
-                    ):
-                        cleaned_ind = ' '.join(cleaned_ind.split(',')[:-1])
-                    stmt_df_by_stmt_type['index'][i] = cleaned_ind
-
-            prefix = ''
-            for i, ind in enumerate(stmt_df_by_stmt_type['index']):
-                if all(list(stmt_df_by_stmt_type.iloc[i, 1:].values == '')) and ind != '':
-                    prefix = f'{" ".join([index.lower().capitalize() for index in ind.split(" ")])}: '
-                elif f"total {prefix.lower().replace(':', '').strip()}" == ind.lower():
-                    prefix = ''
-
-                if ind != '' and ind not in prefix:
-                    stmt_df_by_stmt_type['index'][i] = f'{prefix}{ind}'
-
-        if stmt_type == 'comprehensive/loss/comprehensive_lo':
-            empty_rows = [
-                i
-                for i in range(len(stmt_df_by_stmt_type.index))
-                if all(list(stmt_df_by_stmt_type.iloc[i, 1:].values == ''))
-            ]
-            for i, ind in enumerate(stmt_df_by_stmt_type.iloc[:, 0]):
-                if i in empty_rows and ind.split(' ')[0] == 'Other':
-                    if ', net' in ind:
-                        cleaned_ind = " ".join([
-                            i.strip()
-                            for i in ind.split(',')[:-1]
-                        ]).replace('gain', 'income').replace('incomes', 'income')
-                        stmt_df_by_stmt_type['index'][i] = f'{cleaned_ind}: {cleaned_ind}'
-                    else:
-                        stmt_df_by_stmt_type['index'][i] = f'{ind}: {ind}'
+                    prefix = f'''{" ".join([
+                        cleaned_index.lower().capitalize()
+                        for cleaned_index
+                        in cleaned_index.split(" ")
+                    ])}: '''
+                    intermediate_index.append(cleaned_index)
                 else:
-                    cleaned_ind = ind.replace('gain', 'income').replace('incomes', 'income')
-                    stmt_df_by_stmt_type['index'][i] = cleaned_ind
-            if not stmt_df_by_stmt_type['index'].is_unique:
-                _counter = Counter(stmt_df_by_stmt_type.loc[:, 'index'])
-                duplicate_values = [
-                    v
-                    for v, c
-                    in _counter.items()
-                    if c > 1 and v != ''
-                ]
-                all_dup = {
-                    dup: stmt_df_by_stmt_type.loc[stmt_df_by_stmt_type['index'] == dup].index.to_list()
-                    for dup in duplicate_values
-                }
-                for _, dup_rows in all_dup.items():
-                    for i, dup in enumerate(dup_rows):
-                        modified = False
-                        for d_ind in range(dup, 0, -1):
-                            if not modified:
-                                if d_ind in empty_rows and stmt_df_by_stmt_type['index'][d_ind] != '':
-                                    stmt_df_by_stmt_type['index'][dup] = f"{stmt_df_by_stmt_type['index'][d_ind]}: {stmt_df_by_stmt_type['index'][dup]}"
-                                    modified = True
+                    intermediate_index.append(f'{prefix}{cleaned_index}')
 
-        if stmt_type == 'flow':
+        elif stmt_type == 'flow':
             prefix = ''
-
-            for i, index_name in enumerate(stmt_df_by_stmt_type.iloc[:, 0]):
+            for ind in index_list:
                 cleaned_ind = ' '.join([
-                    ind.strip().capitalize()
-                    for ind in index_name.split(' ')
-                ]).replace('Gain', 'Income')
-
+                    i.strip().capitalize()
+                    for i in ind.split(' ')
+                ])
                 if ', Net' in cleaned_ind:
                     cleaned_ind = ' '.join(cleaned_ind.split(',')[:-1])
-
-                if all(list(stmt_df_by_stmt_type.iloc[i, 1:].values == '')) and len(index_name) < 60:
-                    if 'operating' in ind.lower():
+                if df.loc[ind].isna().values.all() and len(ind) < 60:
+                    if 'operating activities' in ind.lower():
                         prefix = "CFO: "
-                    elif 'investing' in ind.lower():
+                    elif 'investing activities' in ind.lower():
                         prefix = "CFI: "
-                    elif 'financing' in ind.lower():
+                    elif 'financing activities' in ind.lower():
                         prefix = "CFF: "
                     elif 'supplimental' in ind.lower():
                         prefix = "Suppl: "
+                intermediate_index.append(f'{prefix}{cleaned_ind}')
 
-                if stmt_df_by_stmt_type['index'][i] != '':
-                    stmt_df_by_stmt_type['index'][i] = f'{prefix}{cleaned_ind}'
+        if len(intermediate_index) != 0:
+            return df.set_axis(intermediate_index, axis='index')
+        else:
+            return df
 
-        stmt_df_by_stmt_type.set_index('index', inplace=True)
-        replacers = {
+    def _clean_table(self, table, scale, stmt_type=None):
+        data_table = deepcopy(table)
+        data_table.rename(
+            columns={data_table.columns[0]: 'index'},
+            inplace=True,
+        )
+
+        stmt_scale = (
+            data_table.iloc[0, 0].split(' ')[1]
+            if scale is None
+            else scale.split(' ')[1]
+        )
+
+        index_replacers = {
+            '-': ' ',
+            ':': '',
+            '/': '',
+            '[\t ]+': ' ',
+            'Gain': 'Income',
+            'gain': 'income',
+            'Loss': 'Income',
+            'loss': 'income',
+            'incomes': 'income',
+            'Purchases': 'Purchase',
+            'Used In': 'from',
+            'Provided By': 'from',
+            'Generated By': 'from',
+            'Inventory': 'Inventories',
+            'stockholders\'': 'stockholders',
+            'stockholders’': 'stockholders',
+            # r'^\s*$': np.nan,
+        }
+
+        df_replacers = {
             '-': 0,
             ',': '',
             '—': '',
             r'\(': '-',
-            r'\)': '',
+            r'\)': np.nan,
+            '^\$': np.nan,
+            ' -unaudited': '',
+            r'^\s*$': np.nan,
         }
-        stmt_df_by_stmt_type.replace(replacers, regex=True, inplace=True)
-        good_col = [
-            i
-            for i in range(1, len(stmt_df_by_stmt_type.iloc[0]))
-            if ('$' not in stmt_df_by_stmt_type.iloc[:, i].values
-            and ((stmt_df_by_stmt_type.iloc[:, i].values == '').sum()/len(stmt_df_by_stmt_type.iloc[:, i]))*100 <= 40)
-            # and any(x not in stmt_df_by_stmt_type.index.values for x in list(filter(None, stmt_df_by_stmt_type.iloc[:,i]))))
-        ]
-        stmt_df_by_stmt_type = stmt_df_by_stmt_type.iloc[:, good_col]
 
-        non_empty_index_rows = [
-            n
-            for n in range(len(stmt_df_by_stmt_type.index))
-            if not stmt_df_by_stmt_type.index[n] == ''
-        ]
-
-        good_rows = [
-            n
-            for n in range(1, len(stmt_df_by_stmt_type.index.values))
-            if stmt_df_by_stmt_type.index[n] != ''
-        ]
-        new_header_row = int(good_rows[0])-1
-
-        new_head = [
-            ' '.join(
-                re.sub(
-                    "[\(\[].*?[\)\]/]",
-                    "",
-                    stmt_df_by_stmt_type.iloc[:new_header_row+1, i].str.cat(sep=' ')
-                ).split())
-            for i, _ in enumerate(stmt_df_by_stmt_type.iloc[new_header_row])
-        ]
-        stmt_df_by_stmt_type.columns = new_head
-        stmt_df_by_stmt_type = stmt_df_by_stmt_type.iloc[non_empty_index_rows]
-
-        for col in stmt_df_by_stmt_type.columns:
-            stmt_df_by_stmt_type[col] = pd.to_numeric(
-                stmt_df_by_stmt_type[col],
-                errors='coerce',
+        data_table = (
+            data_table
+            .assign(
+                index = data_table['index'].replace(index_replacers, regex=True),
             )
+            .dropna(axis=0, how='all')
+            .set_index('index')
+            .replace(df_replacers, regex=True)
+            .T.drop_duplicates().T
+            .rename(columns={
+                v: ' '.join(
+                    re.sub(
+                        "[\(\[].*?[\)\]/]",
+                        "",
+                        data_table.iloc[:3, i].str.cat(sep=' '),
+                    )
+                    .split()
+                )
+                for i, v in enumerate(data_table.columns.to_list())
+                if v != 'index'
+            })
+            .drop(index=[''])
+            .dropna(axis=1, how='all')
+            .replace({'': 0})
+            .astype(float)
+            .pipe(self._get_scale, stmt_scale, stmt_type)
+            .pipe(self._stmt_cleaning, stmt_type)
+        )
 
-        if 'thousand' in scale:
-            if stmt_type != 'operation/income_statements':
-                stmt_df_by_stmt_type = (stmt_df_by_stmt_type/1000).round(2)
-            elif stmt_type == 'operation/income_statements':
-                for row_name in stmt_df_by_stmt_type.index:
-                    if not any(x in row_name.lower() for x in ['basic', 'diluted']):
-                        stmt_df_by_stmt_type.loc[row_name] = (stmt_df_by_stmt_type.loc[row_name]/1000).round(2)
-        else:
-            pass
-
-        stmt_df_by_stmt_type.fillna(0.0, inplace=True)
-        return stmt_df_by_stmt_type
+        return data_table
 
     def _find_table_by_type(self, table) -> dict:
         ''' Find tables by statement type. '''
@@ -710,39 +673,49 @@ class FundamentalAnalysis:
 
         return fig_data
 
-    def _balance_ratios(df):
-        df['Working Capital'] = df['Total current assets'] - df['Total current liabilities']
-        df['Current Ratio'] = round(
-            df['Total current assets']/df['Total current liabilities'],
-            2,
+    def _balance_ratios(self, df):
+        df = (
+            df
+            .assign(
+                working_capotal = df['Total current assets'] - df['Total current liabilities'],
+                current_ratio = round(
+                    df['Total current assets']/df['Total current liabilities'],
+                    2,
+                ),
+                quick_ratio = round(
+                    (df['Total current assets'] - df['Assets: Inventories'])
+                    /df['Total current liabilities'],
+                    2,
+                ),
+                leverage = round(
+                    df['Total assets']/(
+                        df['Total liabilities and equity']-df['Total liabilities']
+                    ),
+                    2,
+                ),
+                average_inventory = [
+                    round((inv + df['Assets: Inventories'][i-1])/2, 2)
+                    if i > 0
+                    else
+                    0
+                    for i, inv in enumerate(df['Assets: Inventories'])
+                ],
+                average_total_assets = [
+                    round((assets + df['Total assets'][i-1])/2, 2)
+                    if i > 0
+                    else
+                    0
+                    for i, assets in enumerate(df['Total assets'])
+                ],
+            )
         )
-        df['Quick Ratio'] = round(
-            (df['Total current assets'] - df['Assets: Inventory'])/df['Total current liabilities'],
-            2,
-        )
-        df['Leverage'] = round(
-            df['Total assets']/(df['Total liabilities and equity']-df['Total liabilities']),
-            2,
-        )
-        df['Average Inventory'] = [
-            round((inv + df['Assets: Inventory'][i-1])/2, 2)
-            if i > 0
-            else
-            0
-            for i, inv in enumerate(df['Assets: Inventory'])
-        ]
-        df['Average Total Assets'] = [
-            round((assets + df['Total assets'][i-1])/2, 2)
-            if i > 0
-            else
-            0
-            for i, assets in enumerate(df['Total assets'])
-        ]
-        return df    
+        return df
 
     def _calculate_GPR(df):
         df['Gross Profit Margin'] = round(
-            ((df['Total Revenues'] - df['Total Cost Of Revenues'])/df['Total Revenues'])*100,
+            (
+                (df['Total Revenues'] - df['Total Cost Of Revenues'])
+                / df['Total Revenues']) * 100,
             2,
         )
         return df
@@ -777,7 +750,8 @@ class FundamentalAnalysis:
 
         for ratio in self.balance_operation_ratio:
             balance_op_df[ratio['name']] = round(
-                balance_op_df[ratio['numerator']]/balance_op_df[ratio['denominator']],
+                balance_op_df[ratio['numerator']]
+                / balance_op_df[ratio['denominator']],
                 2,
             )
 
@@ -797,7 +771,9 @@ class FundamentalAnalysis:
         for n in range(len(balance_operations_df.index)):
             split_index = balance_operations_df.index[n].rsplit(' ', 1)
             if split_index[0] in lookup_dict:
-                lookup_dict[split_index[0]].append(balance_operations_df.index[n])
+                lookup_dict[split_index[0]].append(
+                    balance_operations_df.index[n]
+                )
             else:
                 lookup_dict[split_index[0]] = [balance_operations_df.index[n]]
 
